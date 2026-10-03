@@ -1,0 +1,67 @@
+# CathayHub 统一界面主题
+# ---------------------------------------------------------------------------
+# CathayHub Search 与 CathayHub Viewer 都读这一份文件（程序目录 runtime/hub_theme.qss）。
+# 改这里 = 两边一起变。文件没了也没关系：两个程序各自内置了一份同样的默认值。
+#
+# 写法就是 Qt 样式表（QSS）。想知道哪一项管什么，改完重开程序看一眼最快。
+
+QWidget {
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC";
+    font-size: 9pt;
+    color: #1F2430;
+}
+
+QMainWindow, QDialog {
+    background: #F7F8FA;
+}
+
+QTreeWidget, QTableWidget, QListWidget, QTreeView, QTableView {
+    background: #FFFFFF;
+    alternate-background-color: #F3F6FA;
+    selection-background-color: #0B5CAB;
+    selection-color: #FFFFFF;
+}
+
+QHeaderView::section {
+    background: #EEF2F7;
+    padding: 4px 6px;
+    border: 0;
+    border-right: 1px solid #DCE3EC;
+}
+
+QPushButton {
+    background: #FFFFFF;
+    border: 1px solid #C9D3E0;
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+
+QPushButton:hover {
+    background: #EAF2FC;
+    border-color: #0B5CAB;
+}
+
+QPushButton:pressed {
+    background: #D8E6F8;
+}
+
+QPushButton:disabled {
+    color: #9AA5B1;
+    background: #F2F4F7;
+}
+
+QLineEdit, QComboBox, QTextEdit, QPlainTextEdit {
+    background: #FFFFFF;
+    border: 1px solid #C9D3E0;
+    border-radius: 4px;
+    padding: 3px 5px;
+}
+
+QStatusBar {
+    background: #EEF2F7;
+}
+
+QToolTip {
+    background: #FFFFF0;
+    color: #1F2430;
+}

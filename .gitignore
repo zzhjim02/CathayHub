@@ -1,0 +1,41 @@
+# ---- 构建与运行时（不入库）----
+runtime/
+build/
+dist/
+dev_dist/
+dev_build/
+*.pyc
+__pycache__/
+*.egg-info/
+*.spec.bak
+
+# ---- 索引库 / 运行时设置（绝不入库、绝不进发布包）----
+# 这两类文件含个人书库路径与阅读记录，误提交等于把隐私推上公网。
+*.db
+*.db-building
+*.db-journal
+*.db-wal
+*.db-shm
+cathayviewer_index.db
+cathayviewer_settings.json
+
+# ---- 运行时的临时/日志文件 ----
+_error.log
+_selftest.txt
+_selftest_*.txt
+_cli.log
+_*.py
+~$*
+
+# ---- 本机专属的一次性脚本（探针、临时诊断，hardcode 了本机路径）----
+_tmp_*
+
+# 上一行的 `_*.py` 会把包的 __init__.py 也吃掉（它同样以单个下划线开头），
+# 漏了这三个文件别人 clone 下来根本 import 不了。这条必须留着。
+!__init__.py
+
+# ---- 系统 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+*.lnk

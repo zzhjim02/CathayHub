@@ -1,0 +1,24 @@
+# CathayHub 依赖清单
+#
+# 说明：本仓库是「源码 + 打包脚本」，编译好的 exe 在 Release 里，
+# 普通用户不需要装下面任何东西。这份文件是给要自己跑源码 / 重新打包的人准备的。
+#
+# 版本下限 = 本机实际验证通过的版本，往上兼容。
+
+# ---- 四个程序都要 ----
+PyQt6>=6.4              # 图形界面
+
+# ---- Viewer / Search ----
+PyMuPDF>=1.23           # import fitz：PDF 渲染、文字层抽取
+chardet>=5.0            # 文本编码探测（古籍 TXT 的 GBK / Big5 / UTF-8 混排）
+opencc-python-reimplemented>=0.1.7   # import opencc：繁简转换
+ijson>=3.2              # 大 JSON 流式解析（元数据著录）
+
+# ---- Search ----
+zhconv>=1.4             # 简繁双向转换（检索词归一化）
+
+# ---- 可选 ----
+pillow-heif>=1.0        # HEIF/HEIC 图片格式支持，不处理这类图可以不装
+
+# ---- 打包（只有要生成 exe 时才需要）----
+# PyInstaller>=6.0
