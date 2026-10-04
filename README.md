@@ -7,7 +7,7 @@
 ![license](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2B-lightgrey)
 ![python](https://img.shields.io/badge/python-3.10%2B-3776ab)
-![version](https://img.shields.io/badge/Viewer-v0.3.16-orange)
+![version](https://img.shields.io/badge/Viewer-v0.3.21-orange)
 
 </div>
 
@@ -29,7 +29,7 @@
 | ④ | [CathayExtract](https://github.com/zzhjim02/CathayExtract) | 已经是双层 PDF → 直接把文字抽成 TXT | v1.2.3 |
 | ⑤ | [CathayShelf](https://github.com/zzhjim02/CathayShelf) | 批量建档归位、规范命名、繁简转换 | v0.4.7 |
 | ⑥ | [CathayFinder](https://github.com/zzhjim02/CathayFinder) | 11 个渠道查这本书在哪（找书号 / 找路径） | v1.1.0 |
-| **⑦** | **CathayHub（你在这里）** | **索引 + 全库检索 + 浏览阅读，四合一的日常入口** | **v0.3.16** |
+| **⑦** | **CathayHub（你在这里）** | **索引 + 全库检索 + 浏览阅读，四合一的日常入口** | **v0.3.21** |
 
 > 🧭 **最常用的一条线**：⑥ 查到书 → ① 转成 PDF → ② 让它能搜 → ⑤ 著录归架 → ⑦ 检索、翻开。
 > 每一步都能单独用，不强制串起来；整套**纯本地、不联网、不动你的原件**。
@@ -43,12 +43,6 @@
 | [CathayReader](https://github.com/zzhjim02/CathayReader) | 已由 ⑦ CathayHub Viewer 取代 |
 | [CathaySimplify](https://github.com/zzhjim02/CathaySimplify) | 已并入 ⑤ CathayShelf 的「繁简转换 / 编码规范化」 |
 
-**🛠️ 备用小工具（不占主线，按需取用）**
-
-| 工具 | 什么时候想到它 |
-|---|---|
-| [CathayDir](https://github.com/zzhjim02/CathayDir)（[📥 Releases](https://github.com/zzhjim02/CathayDir/releases/latest)） | 成批 PDF 摆在那儿，想先知道各自是**横排还是竖排**（分流做 OCR、挑引擎参数、建库前摸底）—— 每 10 页抽一页批量判，结果能存 CSV，也能直接分成「横排 / 竖排 / 未知」三个柜。判定算法借自 CathayPDG |
-
 ---
 
 ## 📦 四个程序
@@ -58,7 +52,7 @@
 | **CathayHub Launcher** | 0.1.3 | 第一次打开时用它：自动找"索引在哪、书库在哪"，做好路径对照。**书库挪位置后不用来回改路径** |
 | **CathayHub Indexer** | 0.1.1 | 管检索索引：新建、引用已有、增量更新、重建、重命名、删除、分组、定时更新 |
 | **CathayHub Search** | 0.2.14 | 跨整个书库全文检索。走 FileLocator Pro 索引，十几万条秒级出结果，还能算出命中在 PDF 第几页 |
-| **CathayHub Viewer** | v0.3.16 | 浏览与阅读。文件名索引、文内查找、PDF/TXT 对读、摘录本、截图本、学术引用，**多本书用标签页并列翻** |
+| **CathayHub Viewer** | v0.3.21 | 浏览与阅读。文件名索引、文内查找、PDF/TXT 对读、摘录本、截图本、学术引用，**多本书用标签页并列翻** |
 
 ---
 
@@ -67,8 +61,8 @@
 **Windows 10 / 11（64 位）。不需要你装 Python、Qt、PyMuPDF —— 全部随包带来。**
 
 1. 到 [Releases](https://github.com/zzhjim02/CathayHub/releases) 下载
-   `CathayHub-v0.3.16-windows-x64.zip`（256 MB，解压即用）
-   想看源码就下 `CathayHub-v0.3.16-source.zip`（3.2 MB）
+   `CathayHub-v0.3.21-windows-x64.zip`（256 MB，解压即用）
+   想看源码就下 `CathayHub-v0.3.21-source.zip`（3.2 MB）
 2. 解压到任意位置（本地盘、移动硬盘都行），**整个文件夹拷走即可**
 3. 第一次先双击 **「CathayHub Launcher」** 跑一遍向导
 
@@ -167,7 +161,13 @@ CathayHub/
 
 ## 📜 更新日志
 
-当前构建：**Search 0.2.14 / Viewer v0.3.16 / Launcher 0.1.3 / Indexer 0.1.1**（2026-10-03）
+当前构建：**Search 0.2.14 / Viewer v0.3.21 / Launcher 0.1.3 / Indexer 0.1.1**（2026-10-04）
+
+Viewer v0.3.21 主要改动：
+
+1. **多标签下右栏「导航 – 查找」终于跟到当前那一本** —— 以前连着开几本书，右栏挂的永远是第一本的面板：目录是它的、查找结果也是它的；第 2、3 本明明没带检索词，却一直显示着第一本的命中
+2. **`Ctrl+T` 目录 / `Ctrl+Shift+T` 缩略图 / `Ctrl+F` 查找** 三个快捷键一并转发到当前标签 —— 以前在第 2 本上按它们，动的其实是第 1 本书
+3. **换书时收掉上一本没跑完的后台扫词** —— 「本书命中……还在定位后面的页码…」不会再一直挂着不动
 
 Viewer v0.3.16 主要改动：
 
