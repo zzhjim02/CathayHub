@@ -10030,7 +10030,20 @@ class MainWindow(QMainWindow):
         _capped = _sz > TEXT_DISPLAY_MAX
         txt = self._read_text_file(p, TEXT_DISPLAY_MAX if _capped else 0)
         self._pdf_stop()
-        self._hide_nav()
+        # 【v0.3.22】打开 TXT / MD 时右栏也要展开，并直接切到「查找」页签 ——
+        # 以前这里是无条件 `_hide_nav()`，于是 TXT 那一份命中结果只能挤在阅读区
+        # 顶部那条窄栏里，右栏要么空着、要么还挂着上一本书的。
+        self._show_nav(2)
+        try:
+            # TXT 没有大纲也没有页面缩略图：别留着上一本 PDF 的条目在那儿误导人
+            toc = getattr(self, '_nav_toc', None)
+            if toc is not None:
+                toc.clear()
+            tl = getattr(self, '_thumb_list', None)
+            if tl is not None:
+                tl.clear()
+        except Exception:
+            pass
         self._expand_reader()                 # batch22：打开文本 → 把阅读区放回来
         self.stack.setCurrentWidget(self.text_view)
         self.view.setPlainText(txt)
