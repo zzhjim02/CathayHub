@@ -1,0 +1,33 @@
+# ---- 构建与运行时（不入库）----
+runtime/
+build/
+dist/
+dev_dist/
+dev_build/
+dev_dist2/
+dev_build2/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# ---- 索引库 / 运行时设置（绝不入库、绝不进发布包）----
+*.db
+*.db-building
+*.db-journal
+*.db-wal
+*.db-shm
+cathayviewer_index.db
+cathayviewer_settings.json
+
+# ---- 运行时的临时/日志文件 ----
+_error.log
+_selftest.txt
+_cli.log
+_*.py
+~$*
+
+# ---- 系统 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+*.lnk

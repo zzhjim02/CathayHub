@@ -1,0 +1,206 @@
+> 🏠 **本工具属于 [Cathay 系列软件](https://github.com/zzhjim02/Cathay)** —— 面向人文社会科学研究的电子书处理工具流，
+> 从找书、OCR、著录到索引、阅读、检索、摘录，覆盖文献处理全流程。**[→ 全部软件与下载入口](https://github.com/zzhjim02/Cathay)**
+
+<div align="center">
+
+# 🏛️ CathayHub
+
+**一套给人文社科研究者用的本地书库工具 —— 在自己的文件夹里检索，找到的书直接翻开，指的是同一本实体书的各种文件互相认得出来**
+
+![license](https://img.shields.io/badge/license-GPL--3.0-blue)
+![platform](https://img.shields.io/badge/platform-Windows%2010%2B-lightgrey)
+![python](https://img.shields.io/badge/python-3.10%2B-3776ab)
+![version](https://img.shields.io/badge/Viewer-v0.3.16-orange)
+
+</div>
+
+> 所有的"看见"都是只读的：**不改动你的任何一个源文件，也不往书库里写一个字节**。
+> 索引数据（可能几十 GB）始终留在你自己的盘上，本程序从不写它。
+
+---
+
+## 🔗 Cathay 人文社科工具链
+
+这是一整套给人文社科研究者用的**本地**工具：从「找到一本书」，到「把它变成能搜、能读、能引用的 PDF」，再到「在上万本书里一秒检索」——每一步一个小程序，**各自独立，只挑你用得上的那一步就行**。
+
+| 步骤 | 工具 | 一句话 | 版本 |
+|:---:|---|---|---|
+| ⓪ | [CathayRepair](https://github.com/zzhjim02/CathayRepair) | PDF 打不开、一翻就崩 → 先把它抢救回来 | v1.0.0 |
+| ① | [CathayPDG](https://github.com/zzhjim02/CathayPDG) | 读秀 / 超星的 PDG 压缩包 → PDF | v0.1.6 |
+| ② | [CathayOCR](https://github.com/zzhjim02/CathayOCR) | 扫描件做 OCR → 能搜索、能复制的 PDF | v1.2.4 |
+| ③ | [CathayRestore](https://github.com/zzhjim02/CathayRestore) | 把 OCR 出来的 TXT 写回 PDF，做成双层 | v1.0.0 |
+| ④ | [CathayExtract](https://github.com/zzhjim02/CathayExtract) | 已经是双层 PDF → 直接把文字抽成 TXT | v1.2.3 |
+| ⑤ | [CathayShelf](https://github.com/zzhjim02/CathayShelf) | 批量建档归位、规范命名、繁简转换 | v0.4.6 |
+| ⑥ | [CathayFinder](https://github.com/zzhjim02/CathayFinder) | 11 个渠道查这本书在哪（找书号 / 找路径） | v1.1.0 |
+| **⑦** | **CathayHub（你在这里）** | **索引 + 全库检索 + 浏览阅读，四合一的日常入口** | **v0.3.16** |
+
+> 🧭 **最常用的一条线**：⑥ 查到书 → ① 转成 PDF → ② 让它能搜 → ⑤ 著录归架 → ⑦ 检索、翻开。
+> 每一步都能单独用，不强制串起来；整套**纯本地、不联网、不动你的原件**。
+
+**已成历史（功能已并入后面的工具，代码还能跑）**
+
+| 工具 | 现状 |
+|---|---|
+| [CathayIndex](https://github.com/zzhjim02/CathayIndex) | 已并入 ⑥ CathayFinder 的「本地文件库索引」页签，以及 ⑦ CathayHub Indexer |
+| [CathayViewer](https://github.com/zzhjim02/CathayViewer) | 已并入 ⑦ CathayHub Viewer |
+| [CathayReader](https://github.com/zzhjim02/CathayReader) | 已由 ⑦ CathayHub Viewer 取代 |
+| [CathaySimplify](https://github.com/zzhjim02/CathaySimplify) | 已并入 ⑤ CathayShelf 的「繁简转换 / 编码规范化」 |
+
+---
+
+## 📦 四个程序
+
+| 程序 | 版本 | 干什么 |
+|---|---|---|
+| **CathayHub Launcher** | 0.1.3 | 第一次打开时用它：自动找"索引在哪、书库在哪"，做好路径对照。**书库挪位置后不用来回改路径** |
+| **CathayHub Indexer** | 0.1.1 | 管检索索引：新建、引用已有、增量更新、重建、重命名、删除、分组、定时更新 |
+| **CathayHub Search** | 0.2.14 | 跨整个书库全文检索。走 FileLocator Pro 索引，十几万条秒级出结果，还能算出命中在 PDF 第几页 |
+| **CathayHub Viewer** | v0.3.16 | 浏览与阅读。文件名索引、文内查找、PDF/TXT 对读、摘录本、截图本、学术引用，**多本书用标签页并列翻** |
+
+---
+
+## 🚀 获取程序
+
+> [!IMPORTANT]
+> **本仓库只公开源代码，不提供编译好的可执行程序（exe / 发行版压缩包）。**
+
+**为什么不发二进制？**
+
+1. **许可不允许（主要原因）。** CathayHub 的全文检索是**调用** FileLocator Pro 完成的 ——
+   它是 Mythicsoft 公司的**商业软件**，本项目的检索层是在它之上做封装，并不替代它。
+   FileLocator Pro 的授权协议**不允许随本项目再分发**，
+   所以"带着它的发行包"不能公开挂在 GitHub 上。
+2. **发了别人也跑不起来。** 完整发行包 250 MB 以上，四个程序还要对着每个人自己的书库
+   位置配置一遍才有意义；公开分发一个开箱即用不了的二进制，价值不大。
+
+**源码是完整且可以自己构建的（GPL-3.0）。** 你自己机器上如果已经合法持有
+FileLocator Pro，照下面「从源码构建」一节打包即可；而**检索以外的一切功能**
+（书库浏览、阅读、文件名索引、图文对读、摘录本、截图本、学术引用）
+都**不依赖**它 —— 源码拿到手就能跑。
+
+**如有研究、教学或实际使用需要，请联系作者获取可执行版本：**
+在本仓库开一个 **[Issue](https://github.com/zzhjim02/CathayHub/issues)** 即可，
+我会通过网盘等方式单独提供，也可以直接交流书库组织与检索方面的做法。
+
+- **源码**：[Releases](https://github.com/zzhjim02/CathayHub/releases) 里的
+  `CathayHub-v0.3.16-source.zip`（GitHub 也会自动生成 `Source code (zip / tar.gz)`）
+- **可执行版（作者通过网盘提供）**：链接稍后补充
+- 拿到可执行版后：**Windows 10 / 11（64 位），不需要你装 Python、Qt、PyMuPDF**，
+  解压到任意位置（本地盘、移动硬盘都行，整个文件夹拷走即可），
+  第一次先双击 **「CathayHub Launcher」** 跑一遍向导
+
+> Windows 出于安全考虑不允许程序直接抢"默认打开方式"。
+> 想让 PDF/TXT 双击就用 Viewer 打开：双击文件夹里的 **`关联文件类型.bat`**
+> （普通权限即可，只动你自己那份注册表，也不会抢走现在的默认程序），
+> 再去「设置 → 应用 → 默认应用」里手动选一次。不想要了就跑 **`取消文件关联.bat`**。
+
+详细操作流程、快捷键表、常见故障排查见 **[使用指南.md](使用指南.md)**。
+
+---
+
+## 🛠️ 从源码构建
+
+普通用户用不到这一节。想改代码或重新打包 exe 才需要。
+
+```bash
+# 1. 装依赖
+pip install -r requirements.txt
+pip install pyinstaller>=6.0
+
+# 2. 逐个打包（四个各自打，产物目录名都叫 CathayHub）
+python -m PyInstaller --noconfirm --clean apps/CathayViewer/CathayHubViewer.spec   --distpath dist_viewer   --workpath build_viewer
+python -m PyInstaller --noconfirm --clean apps/CathaySearch/CathayHubSearch.spec    --distpath dist_search   --workpath build_search
+python -m PyInstaller --noconfirm --clean apps/CathayLauncher/CathayHubLauncher.spec --distpath dist_launcher --workpath build_launcher
+python -m PyInstaller --noconfirm --clean apps/CathayIndexer/CathayHubIndexer.spec  --distpath dist_indexer  --workpath build_indexer
+
+# 3. 合并到同一个文件夹（四个程序的 _internal_* 各占一份，互不干扰）
+mkdir CathayHub
+cp -r dist_viewer/CathayHub/.   CathayHub/
+cp -r dist_search/CathayHub/.   CathayHub/
+cp -r dist_launcher/CathayHub/. CathayHub/
+cp -r dist_indexer/CathayHub/.  CathayHub/
+```
+
+**注意**：`runtime/FileLocatorPro/`（检索引擎，第三方软件）**不在本仓库里**，
+需要自己放进去，否则 Search 搜不了。增量更新索引要求引擎 9.3 及以上。
+
+### 打包瘦身
+
+四个 spec 都调用了 [`tools/pack_utils.py`](tools/pack_utils.py) 的 `peel_unused()`，
+剔掉了源码里一行都没 import 的库（pandas / numpy / PIL / cryptography / psutil / tzdata 等），
+以及 Qt 里用不到的软件 OpenGL（20 MB）、96 种语言翻译（只留中文）、QtPdf / Svg / Network。
+**613 MB → 327 MB**。
+
+这里有个坑值得说：光在 spec 里排除 `qt6svg.dll` 是不够的 —— `imageformats\qsvg.dll`、
+`iconengines\qsvgicon.dll` 仍会被打进来，它们加载时找不到 Qt6Svg，
+**在开发机上多半只是个警告，换台电脑可能就是"双击没反应"**。
+`peel_unused()` 做的是**依赖传递闭包**：点名的不要，凡依赖它的一律跟着不要。
+
+验证用 [`tools/check_pe_deps.py`](tools/check_pe_deps.py)：逐个解析包里所有 exe/dll/pyd 的
+导入表，检查每个 dll 在哪能找到，对比瘦身前后有无新增缺失。
+
+```bash
+python tools/check_pe_deps.py 旧包目录 新包目录
+```
+
+---
+
+## 📁 源码目录
+
+```
+CathayHub/
+├── apps/
+│   ├── CathayViewer/      阅读器（gui.py + viewer_*.py + CathayHubViewer.spec）
+│   ├── CathaySearch/      检索（cathaysearch/ + CathayHubSearch.spec）
+│   ├── CathayLauncher/    入口向导（cathayhub/ + CathayHubLauncher.spec）
+│   └── CathayIndexer/     索引管理（cathayindexer/ + CathayHubIndexer.spec）
+├── tools/
+│   ├── pack_utils.py      打包瘦身：依赖传递闭包裁剪
+│   └── check_pe_deps.py   依赖体检：解析 PE 导入表找缺失
+├── docs/                  开发过程记录
+├── requirements.txt
+├── 使用指南.md             详细功能手册
+└── LICENSE                GPL-3.0
+```
+
+每个 app 目录内保持原有的相对结构，`*.spec` 里的路径都是相对于 spec 自身的，直接就能跑。
+
+---
+
+## 🔒 数据边界
+
+| 数据 | 放哪 | 能不能删 |
+|---|---|---|
+| 四个 exe 与 `_internal_*` | 安装文件夹 | 升级时整批替换 |
+| FileLocator 引擎 | `runtime\FileLocatorPro\` | 不能删，删了就搜不了 |
+| 索引**数据**（几十 GB） | 你自己的盘上，**不在安装文件夹里** | 本程序从不写它 |
+| 文件名索引 `cathayviewer_index.db` | 安装文件夹 | 删了重建即可，但别在升级时删 |
+| 设置与进度 `cathayviewer_settings.json` | 安装文件夹 | 删了就回到出厂设置，**别删** |
+
+**仓库里不含任何个人数据**：`.gitignore` 明确挡掉了 `*.db` 与 `cathayviewer_settings.json`
+（这两个文件含个人书库路径与阅读记录，误提交等于把隐私推上公网）。
+
+---
+
+## 📜 更新日志
+
+当前构建：**Search 0.2.14 / Viewer v0.3.16 / Launcher 0.1.3 / Indexer 0.1.1**（2026-10-03）
+
+Viewer v0.3.16 主要改动：
+
+1. **打开 PDF 有进度条了** —— 顶部 3px 细线，预读 / 开文档 / 抽页尺寸三段真实进度合成，缓动推进只许前进不许后退
+2. **「所有关键词」下点「下一个」点不动** —— 修了。根因是把"填结果"和"跳位置"绑成一条条件，页码只要被挪过一下结果就整个不建了
+3. **`_OPT` 结尾能认亲了** —— `_OPT`/`_opt`/`（优化版）`/`（压缩）`只是"这本被压过"的记号，不是另一本书。1870 本实测漏配 13 → 0
+4. **关掉「图文对读」回到 PDF** —— 以前不管先开什么都只剩 TXT，现在有 PDF 优先回 PDF
+5. **全项目体检**：修掉 6 处"关窗即崩进程"，四个 exe 瘦身 613 MB → 327 MB
+
+各程序的完整历史见 [使用指南.md](使用指南.md) 第八节。
+
+---
+
+## ⚖️ 许可
+
+**GPL-3.0**，见 [LICENSE](LICENSE)。
+
+第三方组件：FileLocator Pro（检索引擎，需自备）、PyMuPDF（PDF 读取）、PyQt6（界面）、
+OpenCC / zhconv（繁简转换）、CBDB 人名别名数据。
