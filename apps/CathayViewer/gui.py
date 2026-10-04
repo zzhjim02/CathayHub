@@ -3740,6 +3740,8 @@ class MainWindow(QMainWindow):
         self._find_view = []        # 实际展示（kept + 可选的 hidden）
         self._find_show_hidden = False
         self._find_manual_words = []   # v0.3.18：手输词铺出来的写法（换书要清）
+        # v0.3.23：Viewer 自己铺开的写法，各自命中几处（下拉要按它排序、标未命中）
+        self._find_word_counts = {}
         self._text_path = ''        # 当前文本视图打开的文件路径
         self._last_json = None
         self._last_related = None
@@ -10816,6 +10818,11 @@ class MainWindow(QMainWindow):
         # 重新问一遍，实测「所有关键词」从 2.20 s 掉到 0.76 s。
         fnd.setUniformItemSizes(True)
         fnd.setWordWrap(False)
+        # 【v0.3.23】当前这一处要在列表里"亮"出来。默认选中色在面板失焦时会被
+        # Qt 刷成灰的、看着像没选中，所以连 :!active 一起指定。
+        fnd.setStyleSheet(
+            'QListWidget::item:selected{background:#0B5CAB;color:#FFFFFF;}'
+            'QListWidget::item:selected:!active{background:#0B5CAB;color:#FFFFFF;}')
         fnd.itemDoubleClicked.connect(self._nav_find_go)
         fnd.itemClicked.connect(self._nav_find_go)
         fnd_box = QWidget()
@@ -10911,6 +10918,34 @@ class MainWindow(QMainWindow):
         self._find_jump(int(k))
         self._upd_find_label()
 
+    def _nav_sync_current(self):
+        """【v0.3.23】「导航-查找」里把**当前这一处**选中并滚到可见处。
+
+        以前只有"用户点了列表"才会选中：用「下一个 / 上一个」一处一处走的时候
+        列表一动不动，上千条结果里根本看不出自己到哪儿了。
+        """
+        lst = getattr(self, '_nav_find', None)
+        if lst is None:
+            return
+        try:
+            i = int(getattr(self, '_find_idx', -1))
+        except Exception:
+            i = -1
+        try:
+            _blk = lst.blockSignals(True)      # 选中是我们设的，别反过来又跳一次
+            try:
+                if i < 0 or i >= lst.count():
+                    lst.setCurrentRow(-1)
+                else:
+                    lst.setCurrentRow(i)
+                    it = lst.item(i)
+                    if it is not None:
+                        lst.scrollToItem(it)
+            finally:
+                lst.blockSignals(_blk)
+        except Exception:
+            pass
+
     def _fill_nav_toc(self):
         """把当前文档的大纲（无大纲则页码）填进「目录」页签，返回条目数。"""
         d = getattr(self, 'pd', None)
@@ -10983,6 +11018,7 @@ class MainWindow(QMainWindow):
         self._hit_words_summary = ''
         # v0.3.18：上一本手输词铺出来的写法也一并清掉，别带进新书
         self._find_manual_words = []
+        self._find_word_counts = {}     # v0.3.23：上一本的"谁命中多少"同理
         try:
             # 上一本那趟流式检索可能还在主线程里跑着，把代号 +1 让它自己认输
             self._find_scan_gen = int(getattr(self, '_find_scan_gen', 0) or 0) + 1
@@ -11107,12 +11143,41 @@ class MainWindow(QMainWindow):
                 pass
         w = getattr(self, '_scan_worker', None)
         self._scan_worker = None
+        # 【v0.3.23】扫词被掐断（换书 / 换标签 / 关窗）时，最后一批往往到不了
+        # 100%，那串"还在定位后面的页码…"就永久挂在摘要后面了。掐掉线程之后
+        # 顺手把它收掉。（放在 return 之前：本来就没有在跑的线程时同样要收）
+        self._set_hit_words_label()
         if w is None:
             return
         try:
             if w.isRunning():
                 w.stop()
                 w.wait(int(ms))
+        except Exception:
+            pass
+
+    def _set_hit_words_label(self, pct=None):
+        """【v0.3.23】刷新查找栏上「本书命中…」那一行。
+
+        pct 给了（0~100）就把后台扫词的进度挂在摘要后面；不给 = 这一轮结束了，
+        只留摘要。以前这串进度字样只由"某一批扫词回调"负责收，扫词被掐断、
+        或最后一批没到 100% 时它就一直挂在那儿，看着像永远扫不完。
+        """
+        try:
+            _sum = getattr(self, '_hit_words_summary', '') or ''
+            if pct is not None:
+                pct = int(pct)
+                if pct >= 100 or _sum:
+                    txt = _sum if pct >= 100 else \
+                        '%s（还在定位后面的页码… %d%%）' % (_sum, pct)
+                else:
+                    txt = '正在定位命中页码… %d%%' % pct
+            else:
+                txt = _sum
+            if self.lb_hit_words.text() != txt:
+                self.lb_hit_words.setText(txt)
+            if txt:
+                self.lb_hit_words.setVisible(True)
         except Exception:
             pass
 
@@ -11190,12 +11255,7 @@ class MainWindow(QMainWindow):
         if not cur or not path or os.path.normcase(cur) != os.path.normcase(path):
             # 期间换书了，这批不算 —— 【v0.3.21】顺便把"还在定位后面的页码…"
             # 这串进度字样收掉：换书时摘要已清空，不收的话它会一直挂在那儿。
-            try:
-                _s = getattr(self, '_hit_words_summary', '') or ''
-                if self.lb_hit_words.text() != _s:
-                    self.lb_hit_words.setText(_s)
-            except Exception:
-                pass
+            self._set_hit_words_label()
             return                      # 期间换书了，这批不算
         first = not getattr(self, '_words_partial_seen', False)
         self._words_partial_seen = True
@@ -11203,22 +11263,13 @@ class MainWindow(QMainWindow):
             self._apply_word_hits(path, out, jump=first)
         if total:
             pct = int(min(100, done * 100.0 / max(1, total)))
-            try:
-                # 【v0.3.17】以前这里无条件把文字改回「正在定位…%d%%」，
-                # 而上面那句 _apply_word_hits 刚把「本书命中：…」填好 ——
-                # 于是这一行被反复盖掉，用户看到的就是"结果明明已经能点
-                # 『下一个』跳了，却一直写着正在定位命中页码"。
-                # 现在：已经有命中摘要就把进度挂在它后面，100% 时不再留进度字样。
-                _sum = getattr(self, '_hit_words_summary', '') or ''
-                if _sum:
-                    self.lb_hit_words.setText(
-                        _sum if pct >= 100 else
-                        '%s（还在定位后面的页码… %d%%）' % (_sum, pct))
-                else:
-                    self.lb_hit_words.setText('正在定位命中页码… %d%%' % pct)
-                self.lb_hit_words.setVisible(True)
-            except Exception:
-                pass
+            # 【v0.3.17】以前这里无条件把文字改回「正在定位…%d%%」，
+            # 而上面那句 _apply_word_hits 刚把「本书命中：…」填好 ——
+            # 于是这一行被反复盖掉，用户看到的就是"结果明明已经能点
+            # 『下一个』跳了，却一直写着正在定位命中页码"。
+            # 现在：已经有命中摘要就把进度挂在它后面，100% 时不再留进度字样。
+            # 【v0.3.23】统一交给 _set_hit_words_label：扫词被掐断时它也会收尾。
+            self._set_hit_words_label(pct)
 
     def _apply_word_hits(self, path, out, jump=False):
         """把一批命中结果填进命中词导航条 / 查找栏；jump=True 时顺手跳过去。"""
@@ -11252,12 +11303,7 @@ class MainWindow(QMainWindow):
         if not cur or not path or os.path.normcase(cur) != os.path.normcase(path):
             # 期间换书了，这批结果作废 —— 【v0.3.21】同上，把可能还挂着的
             # "还在定位…"进度字样一起收掉。
-            try:
-                _s = getattr(self, '_hit_words_summary', '') or ''
-                if self.lb_hit_words.text() != _s:
-                    self.lb_hit_words.setText(_s)
-            except Exception:
-                pass
+            self._set_hit_words_label()
             return                      # 期间换书了，这批结果作废
         words = list(getattr(self, '_last_scan_words', []) or [])
         if not out:
@@ -11280,6 +11326,8 @@ class MainWindow(QMainWindow):
         self._apply_word_hits(
             cur, out,
             jump=not getattr(self, '_words_partial_seen', False))
+        # 【v0.3.23】整本扫完了：不管最后一批报的是百分之多少，进度字样到此为止
+        self._set_hit_words_label()
 
     def _hit_goto(self, wi, pi):
         """跳到某个词的第 pi 个命中处：高亮该词 + 翻到那一页。"""
@@ -11469,9 +11517,15 @@ class MainWindow(QMainWindow):
         （不然「下一个」没得走），但不去动用户正在看的页码 —— 见 `_apply_word_hits`
         里的那段注释。
         """
+        # 【v0.3.23】`_hl_multi` **不能在这里无条件清掉**：后台扫词是分批发的
+        # （每 64 页一批），第二批及以后走到这儿时词没变（下面 sig 相同 → 不重算），
+        # 高亮却被抹平了；随后后台把页面尺寸算准、再走一次 `_pdf_show()` 时拿到的
+        # 就是空高亮 —— 表现正是「所有关键词模式下关键词不高亮」。
+        # 现在改成：真要重算才清；不重算就把上一轮的高亮原样按回去。
         if not run:
             self._find_applied_sig = None     # 换书清场：下一批词要重算
-        self._hl_multi = []          # 换书 / 重填：先清掉上一轮的多词高亮
+            self._hl_multi = []
+            self._find_word_counts = {}
         self._find_manual_words = []  # v0.3.18：下拉交回 CathaySearch 传来的词
         try:
             self.cb_find_word.blockSignals(True)
@@ -11518,7 +11572,29 @@ class MainWindow(QMainWindow):
             sig = tuple(self._find_kws_list())
             if getattr(self, '_find_applied_sig', None) != sig:
                 self._find_applied_sig = sig
+                self._hl_multi = []          # 真要重算了，上一轮的高亮才撤
                 self._find_all_kws(jump_near=bool(jump), auto=bool(jump))
+            else:
+                # 同一批词：结果不用重算，高亮也得留着 —— 见上面那段注释
+                self._hl_reassert()
+
+    def _hl_reassert(self):
+        """【v0.3.23】把当前的高亮词重新按到视图上（结果没重算时用）。
+
+        只在"视图上的高亮跟现在该有的不一致"时才真的设一次，免得每来一批
+        扫词结果就把高亮缓存清一遍、整屏重画 —— 流式检索最怕这个。
+        """
+        try:
+            _m = [str(x) for x in (getattr(self, '_hl_multi', None) or []) if x]
+            if not _m or getattr(self, 'pd', None) is None:
+                return
+            v = self._pdf_view_active()
+            if v is None:
+                return
+            if [str(x) for x in (getattr(v, '_hl_multi', None) or [])] != _m:
+                v.set_highlight(_m)
+        except Exception:
+            pass
 
     def _find_kws_list(self):
         """下拉里除「所有关键词」之外的全部词（按顺序、去重）。"""
@@ -11581,6 +11657,12 @@ class MainWindow(QMainWindow):
         w = (w or '').strip()
         if not w:
             return
+        # 【v0.3.23】下拉里标了「未命中」的词：别再白跑一趟全本扫描，直接说清楚
+        _c = getattr(self, '_find_word_counts', None) or {}
+        if w in _c and not _c.get(w):
+            self._say('「%s」在这本书里一处也没命中（未命中的写法都排在下拉最后，'
+                      '想换口径可在查找框里重搜）' % w, hold=4)
+            return
         try:
             self.ed_find.setText(w)
         except Exception:
@@ -11595,8 +11677,10 @@ class MainWindow(QMainWindow):
             self.find_run()
         finally:
             self._find_no_expand = False
-        self._say('只看「%s」——用「下一个」逐处看，'
-                  '「下一个词」换别的词，「所有关键词」回到合并序列' % w, hold=3)
+        self._say('只看「%s」（%d 处）——用「下一个」逐处看，'
+                  '「下一个词」换别的词，「所有关键词」回到合并序列'
+                  % (w, int(_c.get(w, 0) or 0) if w in _c
+                     else int(self._find_total or 0)), hold=3)
 
     def _find_all_kws(self, words=None, jump_near=True, auto=True, strict=False):
         """【batch30】「所有关键词」：每个词各扫一遍，合并成一条按出现先后排好的序列。
@@ -11853,6 +11937,7 @@ class MainWindow(QMainWindow):
 
     def _fill_find_words_manual(self, words):
         """把手输词铺出来的写法摆进下拉（第 0 项「所有关键词」= 全部合并）。"""
+        self._find_word_counts = {}   # v0.3.23：新一轮扫完才知道谁命中多少
         try:
             self.cb_find_word.blockSignals(True)
             self.cb_find_word.clear()
@@ -11872,20 +11957,79 @@ class MainWindow(QMainWindow):
         self._upd_word_btn()
 
     def _upd_word_summary(self):
-        """扫完之后，把每个写法各命中多少处写在下拉旁边。"""
+        """扫完之后，把每个写法各命中多少处写在下拉旁边（多的在前）。"""
         try:
             cnt = {}
             for h in (getattr(self, '_find_view', None) or []):
                 k = h.get('kw') or ''
                 if k:
                     cnt[k] = cnt.get(k, 0) + 1
+            self._find_word_counts = cnt
             if not cnt:
-                return
+                return cnt
             self._hit_words_summary = '本书命中：%s' % '、'.join(
-                '%s(%d处)' % (k, n) for k, n in cnt.items())
-            self.lb_hit_words.setText(self._hit_words_summary)
+                '%s(%d处)' % (k, n)
+                for k, n in sorted(cnt.items(), key=lambda x: -x[1]))
+            self._set_hit_words_label()
+            return cnt
         except Exception:
-            pass
+            return {}
+
+    def _rank_find_words(self, counts=None):
+        """【v0.3.23】下拉里的写法按**命中多少**重排：多的在前，一处也没命中的
+        沉到最后并写明「未命中」。
+
+        以前一律按"繁简/联想铺开的顺序"摆出来 —— 十几个写法里真正命中的可能
+        只有两三个，用户却得挨个点过去试。现在一眼看得出来，想单独看哪个词
+        直接点它就行（未命中的点了会直接说明，不再白跑一趟扫描）。
+
+        只动 Viewer 自己铺开的那一栏（`find_run`），CathaySearch 传来的命中词
+        清单照旧 —— 那边本来就是按命中的词给的，顺序由 Search 决定。
+        """
+        cb = getattr(self, 'cb_find_word', None)
+        if cb is None or cb.count() <= 1:
+            return
+        cnt = dict(counts if counts is not None
+                   else (getattr(self, '_find_word_counts', None) or {}))
+        items = []
+        for i in range(1, cb.count()):
+            w = ''
+            try:
+                w = str(cb.itemData(i) or cb.itemText(i) or '').strip()
+            except Exception:
+                w = ''
+            if w:
+                items.append((w, int(cnt.get(w, 0) or 0)))
+        if not items:
+            return
+        # 命中多的在前；一样多时保持铺开的原顺序（主词本来排第一）
+        order = {w: k for k, (w, _n) in enumerate(items)}
+        items.sort(key=lambda x: (-x[1], order.get(x[0], 0)))
+        try:
+            cb.blockSignals(True)
+            try:
+                cur = cb.currentIndex()
+                cur_w = str(cb.itemData(cur) or '') if cur > 0 else ''
+                cb.clear()
+                cb.addItem('所有关键词', '')
+                for w, n in items:
+                    cb.addItem('%s（%s）' % (w, ('%d处' % n) if n else '未命中'), w)
+                idx = 0
+                if cur_w:
+                    for i in range(1, cb.count()):
+                        if str(cb.itemData(i) or '') == cur_w:
+                            idx = i
+                            break
+                cb.setCurrentIndex(idx)
+            finally:
+                cb.blockSignals(False)
+        except Exception:
+            try:
+                cb.blockSignals(False)
+            except Exception:
+                pass
+        self._find_word_counts = {w: n for w, n in items}
+        self._upd_word_btn()
 
     def find_run(self):
         """执行查找（当前文件内）。"""
@@ -11915,16 +12059,19 @@ class MainWindow(QMainWindow):
         self._find_only_current = True      # 就在这本里，不外扩同名变体
         self._find_all_kws(words=words, jump_near=False, auto=True,
                            strict=strict)
-        self._upd_word_summary()
+        # 【v0.3.23】下拉按命中多少重排：未命中的写法沉到最后并标「未命中」
+        self._rank_find_words(self._upd_word_summary())
         _bits = []
         if bool(self.st.get('find_variant', True)):
             _bits.append('繁简通搜')
         if bool(self.st.get('find_alias', True)):
             _bits.append('联想词')
+        _nm = sum(1 for _n in (self._find_word_counts or {}).values() if not _n)
         self.statusBar().showMessage(
-            '文内查找「%s」：按%s铺开 %d 个写法，本册共 %d 处 ——「下一个」一处一处走，'
-            '也可在左边下拉里只看某一个写法'
-            % (kw, '+'.join(_bits) or '原词', len(words), int(self._find_total or 0)))
+            '文内查找「%s」：按%s铺开 %d 个写法，本册共 %d 处（其中 %d 个写法未命中，'
+            '已排在下拉最后）——「下一个」一处一处走，也可在左边下拉里只看某一个写法'
+            % (kw, '+'.join(_bits) or '原词', len(words), int(self._find_total or 0),
+               _nm))
 
     @staticmethod
     def _hit(f, h):
@@ -12123,6 +12270,8 @@ class MainWindow(QMainWindow):
         pg = ('第 %d 页' % (int(h['page']) + 1)) if h.get('page') is not None else '文本'
         # batch30：跳过去之后标签得跟着走，否则批量检索完还停在"第 0 / N 处"
         self._upd_find_label()
+        # 【v0.3.23】列表里也把这一处选中（「下一个/上一个」走的时候要看得见）
+        self._nav_sync_current()
         self.statusBar().showMessage('第 %d / %d 处 ｜ %s%s ｜ %s：%s'
                                      % (i + 1, self._find_total, h.get('name') or '',
                                         mark, pg, h.get('ctx') or ''))
@@ -12513,6 +12662,7 @@ class MainWindow(QMainWindow):
             it.setData(Qt.ItemDataRole.UserRole, k)
             lst.addItem(it)
         self._upd_find_hidden_btn()
+        self._nav_sync_current()        # v0.3.23：重建后把当前那一处重新选中
 
     def _populate_find_from(self, start):
         """【v0.3.15】只把 [start:] 这些**新找到**的结果追加进列表。
@@ -12535,6 +12685,7 @@ class MainWindow(QMainWindow):
             it.setData(Qt.ItemDataRole.UserRole, k)
             lst.addItem(it)
         self._upd_find_hidden_btn()
+        self._nav_sync_current()        # v0.3.23：流式追加后别把选中项弄丢
 
     def _upd_find_hidden_btn(self):
         """被去重项那个按钮：没有要隐藏的就别占地方。"""
