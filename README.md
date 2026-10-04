@@ -7,7 +7,7 @@
 ![license](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%2010%2B-lightgrey)
 ![python](https://img.shields.io/badge/python-3.10%2B-3776ab)
-![version](https://img.shields.io/badge/Viewer-v0.3.21-orange)
+![version](https://img.shields.io/badge/Viewer-v0.3.23-orange)
 
 </div>
 
@@ -29,7 +29,7 @@
 | ④ | [CathayExtract](https://github.com/zzhjim02/CathayExtract) | 已经是双层 PDF → 直接把文字抽成 TXT | v1.2.3 |
 | ⑤ | [CathayShelf](https://github.com/zzhjim02/CathayShelf) | 批量建档归位、规范命名、繁简转换 | v0.4.7 |
 | ⑥ | [CathayFinder](https://github.com/zzhjim02/CathayFinder) | 11 个渠道查这本书在哪（找书号 / 找路径） | v1.1.0 |
-| **⑦** | **CathayHub（你在这里）** | **索引 + 全库检索 + 浏览阅读，四合一的日常入口** | **v0.3.21** |
+| **⑦** | **CathayHub（你在这里）** | **索引 + 全库检索 + 浏览阅读，四合一的日常入口** | **v0.3.23** |
 
 > 🧭 **最常用的一条线**：⑥ 查到书 → ① 转成 PDF → ② 让它能搜 → ⑤ 著录归架 → ⑦ 检索、翻开。
 > 每一步都能单独用，不强制串起来；整套**纯本地、不联网、不动你的原件**。
@@ -52,19 +52,25 @@
 | **CathayHub Launcher** | 0.1.3 | 第一次打开时用它：自动找"索引在哪、书库在哪"，做好路径对照。**书库挪位置后不用来回改路径** |
 | **CathayHub Indexer** | 0.1.1 | 管检索索引：新建、引用已有、增量更新、重建、重命名、删除、分组、定时更新 |
 | **CathayHub Search** | 0.2.14 | 跨整个书库全文检索。走 FileLocator Pro 索引，十几万条秒级出结果，还能算出命中在 PDF 第几页 |
-| **CathayHub Viewer** | v0.3.21 | 浏览与阅读。文件名索引、文内查找、PDF/TXT 对读、摘录本、截图本、学术引用，**多本书用标签页并列翻** |
+| **CathayHub Viewer** | v0.3.23 | 浏览与阅读。文件名索引、文内查找、PDF/TXT 对读、摘录本、截图本、学术引用，**多本书用标签页并列翻** |
 
 ---
 
 ## 🚀 下载与安装
 
-**Windows 10 / 11（64 位）。不需要你装 Python、Qt、PyMuPDF —— 全部随包带来。**
+**Windows 10 / 11（64 位）。**
 
-1. 到 [Releases](https://github.com/zzhjim02/CathayHub/releases) 下载
-   `CathayHub-v0.3.21-windows-x64.zip`（256 MB，解压即用）
-   想看源码就下 `CathayHub-v0.3.21-source.zip`（3.2 MB）
-2. 解压到任意位置（本地盘、移动硬盘都行），**整个文件夹拷走即可**
-3. 第一次先双击 **「CathayHub Launcher」** 跑一遍向导
+> 📦 **这个仓库只发源码。** CathayHub 内嵌 FileLocator Pro 的索引引擎，它的许可
+> 不允许随包公开分发，所以 [Releases](https://github.com/zzhjim02/CathayHub/releases)
+> 里只有 `CathayHub-v0.3.23-source.zip`（约 3.5 MB，全项目源码）。
+> **解压即用的 Windows 可执行版走网盘**，链接找作者要；拿到后整个文件夹拷走即可换电脑用。
+
+**从源码跑起来**（需要 Python 3.10+）：
+
+1. 下载 `CathayHub-v0.3.23-source.zip` 解压，然后 `pip install -r requirements.txt`
+2. 跑 `python apps/CathayLauncher/CathayHubLauncher.py` —— 第一次先让它带向导走一遍
+   （找已有书库索引、合成总索引、问要不要建文件名索引、挑配色）
+3. 四个程序各自的入口都在 `apps/` 下，也可以单独跑
 
 > Windows 出于安全考虑不允许程序直接抢"默认打开方式"。
 > 想让 PDF/TXT 双击就用 Viewer 打开：双击文件夹里的 **`关联文件类型.bat`**
@@ -161,7 +167,12 @@ CathayHub/
 
 ## 📜 更新日志
 
-当前构建：**Search 0.2.14 / Viewer v0.3.21 / Launcher 0.1.3 / Indexer 0.1.1**（2026-10-04）
+当前构建：**Search 0.2.14 / Viewer v0.3.23 / Launcher 0.1.3 / Indexer 0.1.1**（2026-10-04）
+
+Viewer v0.3.23 主要改动：
+
+1. **打开 TXT / MD 时右栏也展开** —— 直接停在「查找」页签，显示**这一本**的命中结果。以前打开文本文件就无条件收起导航面板，命中结果只能挤在阅读区顶部那条窄栏里，右栏要么空着、要么还挂着上一本书的
+2. TXT 没有大纲也没有缩略图：切过去时「目录」「缩略图」两个页签会清空，不再留着上一本 PDF 的条目误导人
 
 Viewer v0.3.21 主要改动：
 
