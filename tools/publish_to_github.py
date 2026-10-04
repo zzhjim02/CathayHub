@@ -22,6 +22,17 @@ import subprocess
 import sys
 import time
 
+# 【console 编码】本脚本到处用了 ✅ / 中文进度提示。
+# 从 Git Bash 跑时 stdout 是 UTF-8，一切正常；但从 **PowerShell** 跑时
+# stdout 默认跟着系统 ANSI 代码页（GBK），打印 ✅ 会直接 UnicodeEncodeError
+# 崩在半路 —— 体检修完了、提交却没做成，最难受。
+# 这里强制把 stdout / stderr 设成 UTF-8，两种终端都能跑。
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 REPO = 'zzhjim02/CathayHub'
 BRANCH = 'main'
 PROXY = 'http://127.0.0.1:7890'
@@ -212,7 +223,15 @@ def run(args, tag=''):
     return r
 
 
+USAGE = (__doc__ or '').strip()
+
+
 def main():
+    # 【别再踩】以前 `-h` / `--help` 会被当成未知开关忽略，脚本照跑不误
+    # （还会用默认 message 真的提交一次）。要用法就打用法，然后干干净净退出。
+    if any(a in ('-h', '--help', '/?') for a in sys.argv[1:]):
+        print(USAGE)
+        return 0
     with_docs = '--with-docs' in sys.argv
     dry_run = '--dry-run' in sys.argv
 
@@ -282,8 +301,10 @@ def main():
         print('6) 远端已是最新，没有需要提交的改动')
     else:
         run(git + ['-C', tmp, 'add', '-A'])
-        msg = sys.argv[-1] if (len(sys.argv) > 1 and not sys.argv[-1].startswith('--')) \
-            else 'sync: 同步 CathayHub-DEV 的最新源码'
+        # 提交说明 = 命令行里第一个不以 `--` 开头的参数（这样 `--with-docs`
+        # 在前在后都行，不会被当成说明塞进 commit message）。
+        _pos = [a for a in sys.argv[1:] if not a.startswith('--')]
+        msg = _pos[-1] if _pos else 'sync: 同步 CathayHub-DEV 的最新源码'
         run(git + ['-C', tmp, 'commit', '-m', msg])
         print('6) 推送 …')
         ok = False
