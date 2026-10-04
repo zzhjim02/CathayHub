@@ -6064,6 +6064,9 @@ class MainWindow(QMainWindow):
 
     def toc_here(self):
         """Ctrl+T：显示导航面板的「目录」页签（PDF / EPUB 大纲；没大纲就列页码）。"""
+        _mw = self._tab_current_mw()      # v0.3.21：多标签 → 交给当前那本
+        if _mw is not None and _mw is not self:
+            return _mw.toc_here()
         cur = self._path()
         ext = os.path.splitext(cur)[1].lower()
         openable = ext in ('.pdf', '.epub', '.xps', '.cbz', '.mobi', '.fb2', '.svg')
@@ -6354,6 +6357,109 @@ class MainWindow(QMainWindow):
         n = os.path.basename(path) if path else '空'
         return (n[:26] + '…') if len(n) > 27 else (n or '空')
 
+    def _tab_current_mw(self):
+        """当前标签对应的那个实例（还没标签条时就是自己）。
+
+        【v0.3.21】多标签下，主窗口的快捷键（Ctrl+T 目录 / Ctrl+Shift+T 缩略图 /
+        Ctrl+F 查找）绑的都是主实例自己。不转发的话，在第 2、3 个标签里按这些
+        键，动的却是第 1 本书 —— 面板和快捷键得一起跟到当前标签才算数。
+        """
+        tb = getattr(self, '_tabbar', None)
+        if tb is None:
+            return self
+        i = tb.currentIndex()
+        tabs = getattr(self, '_tabs', None) or []
+        if 0 <= i < len(tabs):
+            return tabs[i].get('mw') or self
+        return self
+
+    def _nav_handoff(self, mw):
+        """【v0.3.21】右栏「导航 – 目录 / 缩略图 / 查找」跟着当前标签走。
+
+        一本 = 一个 MainWindow 实例，导航面板（QDockWidget）建在各自的窗口上；
+        而标签里只搬了阅读区 —— 于是无论切到第几本，右栏挂着的永远是最先那本
+        的面板：目录是它的、查找结果也是它的（第 2、3 本压根没带检索词，却一直
+        显示着第 1 本的命中）。这里把当前那本的面板搬到主窗口右侧，上一本的
+        还回去。
+        """
+        if mw is None:
+            return
+        prev = getattr(self, '_nav_dock_from', None)
+        if prev is mw:
+            return
+        # 搬运过程中 dock 的可见性会变，别把它记成"用户主动收起了面板"
+        for _o in (self, prev, mw):
+            if _o is not None:
+                try:
+                    _o._nav_moving = True
+                except Exception:
+                    pass
+        try:
+            # ① 上一本：面板先收起来；是别的标签的就还回它自己的窗口
+            #    （那窗口本就永不显示；主实例那份留在自己这儿，切回来还要用）
+            if prev is not None:
+                dk0 = getattr(prev, '_nav_dock', None)
+                if dk0 is not None:
+                    try:
+                        if prev is not self and dk0.parent() is self:
+                            self.removeDockWidget(dk0)
+                            dk0.setParent(prev)
+                            prev.addDockWidget(
+                                Qt.DockWidgetArea.RightDockWidgetArea, dk0)
+                        dk0.hide()
+                    except Exception:
+                        pass
+            self._nav_dock_from = mw
+            if mw is self:
+                dk = getattr(self, '_nav_dock', None)
+                if dk is not None and dk.parent() is not self:
+                    try:
+                        dk.setParent(self)
+                        self.addDockWidget(
+                            Qt.DockWidgetArea.RightDockWidgetArea, dk)
+                    except Exception:
+                        pass
+                if dk is not None:
+                    try:
+                        dk.setVisible(bool(getattr(self, '_nav_wanted', False)))
+                    except Exception:
+                        pass
+                return
+            # ② 当前这本：把它的面板搬进主窗口右侧
+            dk = getattr(mw, '_nav_dock', None)
+            if dk is None:
+                try:
+                    mw._build_nav_dock()
+                    dk = getattr(mw, '_nav_dock', None)
+                except Exception:
+                    dk = None
+            if dk is None:
+                return
+            try:
+                if dk.parent() is mw:
+                    mw.removeDockWidget(dk)
+                dk.setParent(self)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dk)
+                dk.setVisible(bool(getattr(mw, '_nav_wanted', False)))
+            except Exception:
+                pass
+        finally:
+            for _o in (self, prev, mw):
+                if _o is not None:
+                    try:
+                        _o._nav_moving = False
+                    except Exception:
+                        pass
+
+    def _nav_vis_changed(self, vis):
+        """记住"用户想不想看导航面板"。切标签搬面板时的显隐不算数。"""
+        try:
+            if getattr(self, '_nav_moving', False):
+                return
+            self._nav_wanted = bool(vis)
+        except Exception:
+            pass
+
     def _tab_find(self, path):
         """这本书是不是已经开在某个标签里了。"""
         key = os.path.normcase(os.path.normpath(path))
@@ -6393,6 +6499,9 @@ class MainWindow(QMainWindow):
                        'path': (getattr(self, '_pd_path', '')
                                 or getattr(self, '_text_path', ''))}]
         self._tabbar = tb
+        # v0.3.21：主实例那块导航面板此刻正挂在自己窗口上 —— 记下来，
+        # 切到别的标签时才知道该收起哪一块。
+        self._nav_dock_from = self
         return tb
 
     def _tab_new(self, path):
@@ -6428,6 +6537,16 @@ class MainWindow(QMainWindow):
         it = self._tabs[i]
         mw = it.get('mw')
         if mw is not None and mw is not self:
+            # v0.3.21：它那块导航面板此刻可能正挂在主窗口右侧 —— 先摘下来，
+            # 否则实例销毁后（deleteLater）面板跟着一起没，右栏就空了
+            if getattr(self, '_nav_dock_from', None) is mw:
+                _dk = getattr(mw, '_nav_dock', None)
+                if _dk is not None and _dk.parent() is self:
+                    try:
+                        self.removeDockWidget(_dk)
+                    except Exception:
+                        pass
+                self._nav_dock_from = None
             try:
                 fn = getattr(mw, '_release_pdf_doc', None)
                 if fn:
@@ -6446,6 +6565,11 @@ class MainWindow(QMainWindow):
         if not self._tabs or i < 0 or i >= len(self._tabs):
             return
         it = self._tabs[i]
+        # v0.3.21：右栏导航面板跟着当前标签换（目录 / 缩略图 / 查找都归它）
+        try:
+            self._nav_handoff(it.get('mw'))
+        except Exception:
+            pass
         p = it.get('path') or ''
         if p:
             self.setWindowTitle('%s — %s' % (APP_TITLE, os.path.basename(p)))
@@ -10717,6 +10841,14 @@ class MainWindow(QMainWindow):
         self._nav_find = fnd
         self._thumb_dock = dk            # 兼容旧断言/旧叫法
         self._thumb_list = lst
+        # 【v0.3.21】记着"用户想不想看这块面板"：切标签时面板要整体搬家，
+        # 搬过去之后该不该显示，就照这个来（不然第 2 本一打开就把面板弹出来，
+        # 或者用户明明收起了又自己冒出来）。
+        self._nav_wanted = False
+        try:
+            dk.visibilityChanged.connect(self._nav_vis_changed)
+        except Exception:
+            pass
 
     def _build_thumb_dock(self):        # 兼容旧名
         self._build_nav_dock()
@@ -10733,12 +10865,14 @@ class MainWindow(QMainWindow):
             pass
         if int(tab) == 1:
             self._start_thumb_load()
+        self._nav_wanted = True          # v0.3.21：这本书是想看面板的
         self._nav_dock.show()
 
     def _hide_nav(self):
         dk = getattr(self, '_nav_dock', None)
         if dk is not None:
             dk.hide()
+        self._nav_wanted = False         # v0.3.21：切回来时别再自己冒出来
         self._stop_thumb_timer()
 
     def _nav_toc_go(self, item):
@@ -10811,6 +10945,13 @@ class MainWindow(QMainWindow):
 
     def _after_pdf_open(self):
         """打开 PDF/EPUB 后：清掉上一份文档的查找状态，填目录并默认展开导航面板。"""
+        # 【v0.3.21】换了书：上一本那趟后台扫词得掐掉。以前只有关窗时才收，
+        # 于是旧书扫到一半的结果会盖到新书上 —— 用户看到的就是"本书命中……
+        # 还在定位后面的页码…"一直挂着不动。
+        try:
+            self._stop_scan_worker(ms=200)
+        except Exception:
+            pass
         self._pd_texts = None
         self._pd_texts_doc = None
         self._hl_kw = ''
@@ -11034,6 +11175,14 @@ class MainWindow(QMainWindow):
         """
         cur = self._find_current_path()
         if not cur or not path or os.path.normcase(cur) != os.path.normcase(path):
+            # 期间换书了，这批不算 —— 【v0.3.21】顺便把"还在定位后面的页码…"
+            # 这串进度字样收掉：换书时摘要已清空，不收的话它会一直挂在那儿。
+            try:
+                _s = getattr(self, '_hit_words_summary', '') or ''
+                if self.lb_hit_words.text() != _s:
+                    self.lb_hit_words.setText(_s)
+            except Exception:
+                pass
             return                      # 期间换书了，这批不算
         first = not getattr(self, '_words_partial_seen', False)
         self._words_partial_seen = True
@@ -11088,6 +11237,14 @@ class MainWindow(QMainWindow):
         self._scan_worker = None
         cur = self._find_current_path()
         if not cur or not path or os.path.normcase(cur) != os.path.normcase(path):
+            # 期间换书了，这批结果作废 —— 【v0.3.21】同上，把可能还挂着的
+            # "还在定位…"进度字样一起收掉。
+            try:
+                _s = getattr(self, '_hit_words_summary', '') or ''
+                if self.lb_hit_words.text() != _s:
+                    self.lb_hit_words.setText(_s)
+            except Exception:
+                pass
             return                      # 期间换书了，这批结果作废
         words = list(getattr(self, '_last_scan_words', []) or [])
         if not out:
@@ -11612,6 +11769,9 @@ class MainWindow(QMainWindow):
 
     def find_focus(self):
         """Ctrl+F：显示并聚焦查找条。"""
+        _mw = self._tab_current_mw()      # v0.3.21：多标签 → 交给当前那本
+        if _mw is not None and _mw is not self:
+            return _mw.find_focus()
         try:
             self._find_only_current = False      # 手输 Ctrl+F 恢复跨同名变体的旧行为
             self._find_bar_widget.setVisible(True)
@@ -12432,6 +12592,9 @@ class MainWindow(QMainWindow):
 
     def toggle_thumbs(self):
         """Ctrl+Shift+T：打开/隐藏右侧缩略图面板（PDF/EPUB，懒加载前 40 页）。"""
+        _mw = self._tab_current_mw()      # v0.3.21：多标签 → 交给当前那本
+        if _mw is not None and _mw is not self:
+            return _mw.toggle_thumbs()
         d = getattr(self, 'pd', None)
         if d is None or int(getattr(d, 'page_count', 0) or 0) <= 0:
             self.statusBar().showMessage('缩略图只对已打开的 PDF / EPUB 有效'
