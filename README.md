@@ -1,6 +1,3 @@
-> 🏠 **本工具属于 [Cathay 系列软件](https://github.com/zzhjim02/Cathay)** —— 面向人文社会科学研究的电子书处理工具流，
-> 从找书、OCR、著录到索引、阅读、检索、摘录，覆盖文献处理全流程。**[→ 全部软件与下载入口](https://github.com/zzhjim02/Cathay)**
-
 <div align="center">
 
 # 🏛️ CathayHub
@@ -26,7 +23,7 @@
 | 步骤 | 工具 | 一句话 | 版本 |
 |:---:|---|---|---|
 | ⓪ | [CathayRepair](https://github.com/zzhjim02/CathayRepair) | PDF 打不开、一翻就崩 → 先把它抢救回来 | v1.0.0 |
-| ① | [CathayPDG](https://github.com/zzhjim02/CathayPDG) | 读秀 / 超星的 PDG 压缩包 → PDF | v0.1.6 |
+| ① | [CathayPDG](https://github.com/zzhjim02/CathayPDG) | 读秀 / 超星的 PDG 压缩包 → PDF | v0.1.7 |
 | ② | [CathayOCR](https://github.com/zzhjim02/CathayOCR) | 扫描件做 OCR → 能搜索、能复制的 PDF | v1.2.4 |
 | ③ | [CathayRestore](https://github.com/zzhjim02/CathayRestore) | 把 OCR 出来的 TXT 写回 PDF，做成双层 | v1.0.0 |
 | ④ | [CathayExtract](https://github.com/zzhjim02/CathayExtract) | 已经是双层 PDF → 直接把文字抽成 TXT | v1.2.3 |
@@ -59,35 +56,15 @@
 
 ---
 
-## 🚀 获取程序
+## 🚀 下载与安装
 
-> [!IMPORTANT]
-> **本仓库只公开源代码，不提供编译好的可执行程序（exe / 发行版压缩包）。**
+**Windows 10 / 11（64 位）。不需要你装 Python、Qt、PyMuPDF —— 全部随包带来。**
 
-**为什么不发二进制？**
-
-1. **许可不允许（主要原因）。** CathayHub 的全文检索是**调用** FileLocator Pro 完成的 ——
-   它是 Mythicsoft 公司的**商业软件**，本项目的检索层是在它之上做封装，并不替代它。
-   FileLocator Pro 的授权协议**不允许随本项目再分发**，
-   所以"带着它的发行包"不能公开挂在 GitHub 上。
-2. **发了别人也跑不起来。** 完整发行包 250 MB 以上，四个程序还要对着每个人自己的书库
-   位置配置一遍才有意义；公开分发一个开箱即用不了的二进制，价值不大。
-
-**源码是完整且可以自己构建的（GPL-3.0）。** 你自己机器上如果已经合法持有
-FileLocator Pro，照下面「从源码构建」一节打包即可；而**检索以外的一切功能**
-（书库浏览、阅读、文件名索引、图文对读、摘录本、截图本、学术引用）
-都**不依赖**它 —— 源码拿到手就能跑。
-
-**如有研究、教学或实际使用需要，请联系作者获取可执行版本：**
-在本仓库开一个 **[Issue](https://github.com/zzhjim02/CathayHub/issues)** 即可，
-我会通过网盘等方式单独提供，也可以直接交流书库组织与检索方面的做法。
-
-- **源码**：[Releases](https://github.com/zzhjim02/CathayHub/releases) 里的
-  `CathayHub-v0.3.16-source.zip`（GitHub 也会自动生成 `Source code (zip / tar.gz)`）
-- **可执行版（作者通过网盘提供）**：链接稍后补充
-- 拿到可执行版后：**Windows 10 / 11（64 位），不需要你装 Python、Qt、PyMuPDF**，
-  解压到任意位置（本地盘、移动硬盘都行，整个文件夹拷走即可），
-  第一次先双击 **「CathayHub Launcher」** 跑一遍向导
+1. 到 [Releases](https://github.com/zzhjim02/CathayHub/releases) 下载
+   `CathayHub-v0.3.16-windows-x64.zip`（256 MB，解压即用）
+   想看源码就下 `CathayHub-v0.3.16-source.zip`（3.2 MB）
+2. 解压到任意位置（本地盘、移动硬盘都行），**整个文件夹拷走即可**
+3. 第一次先双击 **「CathayHub Launcher」** 跑一遍向导
 
 > Windows 出于安全考虑不允许程序直接抢"默认打开方式"。
 > 想让 PDF/TXT 双击就用 Viewer 打开：双击文件夹里的 **`关联文件类型.bat`**
