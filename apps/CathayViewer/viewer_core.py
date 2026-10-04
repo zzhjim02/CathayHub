@@ -19,7 +19,7 @@ import time
 from ctypes import wintypes
 
 APP_TITLE = 'CathayHub Viewer · 学术书库阅读工具'
-APP_VERSION = 'v0.3.21'
+APP_VERSION = 'v0.3.22'
 DEFAULT_ROOTS = [r'X:\我的书库', r'X:\我的书库-扩展']
 SKIP_DIRS = {'$recycle.bin', 'system volume information', '__pycache__', '.git',
              '.svn', 'node_modules', '.idea', '$windows.~ws'}
